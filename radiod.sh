@@ -32,6 +32,13 @@ pause_radio() {
 	echo '{"command": ["set_property", "pause", true]}' | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
 }
 
+toggle_pause() {
+	echo '{"command": ["get_property", "pause"]}' | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo |
+		grep -q '"data":true' &&
+		echo '{"command": ["set_property", "pause", false]}' | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo ||
+		echo '{"command": ["set_property", "pause", true]}' | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
+}
+
 resume_radio() {
 	echo '{"command": ["set_property", "pause", false]}' | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
 }
@@ -84,6 +91,7 @@ daemon() {
 		voldown) volume_down ;;
 		pause) pause_radio ;;
 		resume) resume_radio ;;
+		toggle) toggle_pause ;;
 		*) echo "Unknown command: $line" ;;
 		esac
 	done
@@ -109,4 +117,8 @@ fi
 
 if [ "$1" == "resume" ]; then
 	echo "resume" >${XDG_RUNTIME_DIR}/radiod/cmd
+fi
+
+if [ "$1" == "toggle" ]; then
+	echo "toggle" >${XDG_RUNTIME_DIR}/radiod/cmd
 fi
