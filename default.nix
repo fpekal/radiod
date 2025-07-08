@@ -1,4 +1,4 @@
-{ stdenv, yt-dlp, mpv }:
+{ stdenv, yt-dlp, mpv, bash, socat }:
 stdenv.mkDerivation {
 	name = "radiod";
 	version = "0.0.1";
@@ -9,5 +9,6 @@ stdenv.mkDerivation {
 		yt-dlp
 		mpv
 		bash
+		socat
 	];
 }

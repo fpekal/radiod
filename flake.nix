@@ -10,7 +10,9 @@
 			system = "x86_64-linux";
 			pkgs = nixpkgs.legacyPackages.${system};
 		in {
-			packages.${system}.radiod = pkgs.callPackage ./default.nix {};
-			packages.${system}.default = self.packages.${system}.radiod;
+			packages.${system} = {
+				radiod = pkgs.callPackage ./default.nix {};
+				default = self.packages.${system}.radiod;
+			};
 		};
 }
