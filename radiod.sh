@@ -28,6 +28,14 @@ volume_up() {
 	echo "{\"command\": [\"set_property\", \"volume\", \"${vol}\"]}" | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
 }
 
+pause_radio() {
+	echo '{"command": ["set_property", "pause", true]}' | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
+}
+
+resume_radio() {
+	echo '{"command": ["set_property", "pause", false]}' | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
+}
+
 change_station() {
 	# Zwiększ indeks stacji i zawróć do początku, jeśli przekroczony
 	curr_station=$(((curr_station + 1) % ${#stations[@]}))
@@ -74,6 +82,8 @@ daemon() {
 		next) change_station ;;
 		volup) volume_up ;;
 		voldown) volume_down ;;
+		pause) pause_radio ;;
+		resume) resume_radio ;;
 		*) echo "Unknown command: $line" ;;
 		esac
 	done
@@ -91,4 +101,12 @@ fi
 
 if [ "$1" == "next" ]; then
 	echo "next" >${XDG_RUNTIME_DIR}/radiod/cmd
+fi
+
+if [ "$1" == "pause" ]; then
+	echo "pause" >${XDG_RUNTIME_DIR}/radiod/cmd
+fi
+
+if [ "$1" == "resume" ]; then
+	echo "resume" >${XDG_RUNTIME_DIR}/radiod/cmd
 fi
