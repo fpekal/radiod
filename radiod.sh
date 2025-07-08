@@ -1,10 +1,21 @@
 #!/usr/bin/env bash
 
-vol=100
+vol=80
+
+stations=(
+	"echo https://195.150.20.243/RMFMAXXX48"
+	"echo https://rs6-krk2.rmfstream.pl/rmf_fm"
+	"echo https://redir.atmcdn.pl/sc/o2/Eurozet/live/audio.livx"
+	"echo https://n-11-24.dcs.redcdn.pl/sc/o2/Eurozet/live/antyradio.livx"
+	"echo https://stream2.nadaje.com:8023/"
+	"echo http://stream.radioluz.pl:8000/luzhifi.mp3"
+	"yt-dlp -g https://www.youtube.com/watch?v=jfKfPfyJRdk"
+)
+curr_station=0
 
 create_mpv() {
 	mkfifo ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
-	mpv --input-ipc-server=${XDG_RUNTIME_DIR}/radiod/mpv-fifo --no-video $(yt-dlp -g https://www.youtube.com/watch?v=jfKfPfyJRdk) &>/dev/null &
+	mpv --volume=${vol} --input-ipc-server=${XDG_RUNTIME_DIR}/radiod/mpv-fifo --no-video $(eval "${stations[0]}") &>/dev/null &
 }
 
 volume_down() {
@@ -14,6 +25,31 @@ volume_down() {
 
 volume_up() {
 	vol=$(($vol + 2))
+	echo "{\"command\": [\"set_property\", \"volume\", \"${vol}\"]}" | socat - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
+}
+
+change_station() {
+	# Zwiększ indeks stacji i zawróć do początku, jeśli przekroczony
+	curr_station=$(((curr_station + 1) % ${#stations[@]}))
+
+	# Zatrzymaj poprzednie mpv (jeśli istnieje)
+	if [ -e "${XDG_RUNTIME_DIR}/radiod/mpv-fifo" ]; then
+		echo '{"command": ["quit"]}' | socat - "${XDG_RUNTIME_DIR}/radiod/mpv-fifo"
+		sleep 0.2
+	fi
+
+	# Usuń starą kolejkę FIFO i utwórz nową
+	rm -f ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
+	mkfifo ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
+
+	# Pobierz URL stacji
+	url=$(eval "${stations[$curr_station]}")
+
+	# Uruchom mpv z nowym URL
+	mpv --input-ipc-server=${XDG_RUNTIME_DIR}/radiod/mpv-fifo --no-video "$url" &>/dev/null &
+
+	# Ustaw aktualną głośność
+	sleep 0.2
 	echo "{\"command\": [\"set_property\", \"volume\", \"${vol}\"]}" | socat - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
 }
 
@@ -51,4 +87,8 @@ fi
 
 if [ "$1" == "up" ]; then
 	echo "volup" >${XDG_RUNTIME_DIR}/radiod/cmd
+fi
+
+if [ "$1" == "next" ]; then
+	echo "next" >${XDG_RUNTIME_DIR}/radiod/cmd
 fi
