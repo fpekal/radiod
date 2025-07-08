@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!%bash%
 
 vol=80
 
@@ -9,23 +9,23 @@ stations=(
 	"echo https://n-11-24.dcs.redcdn.pl/sc/o2/Eurozet/live/antyradio.livx"
 	"echo https://stream2.nadaje.com:8023/"
 	"echo http://stream.radioluz.pl:8000/luzhifi.mp3"
-	"yt-dlp -g https://www.youtube.com/watch?v=jfKfPfyJRdk"
+	"%yt-dlp% -g https://www.youtube.com/watch?v=jfKfPfyJRdk"
 )
 curr_station=0
 
 create_mpv() {
 	mkfifo ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
-	mpv --volume=${vol} --input-ipc-server=${XDG_RUNTIME_DIR}/radiod/mpv-fifo --no-video $(eval "${stations[0]}") &>/dev/null &
+	%mpv% --volume=${vol} --input-ipc-server=${XDG_RUNTIME_DIR}/radiod/mpv-fifo --no-video $(eval "${stations[0]}") &>/dev/null &
 }
 
 volume_down() {
 	vol=$(($vol - 2))
-	echo "{\"command\": [\"set_property\", \"volume\", \"${vol}\"]}" | socat - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
+	echo "{\"command\": [\"set_property\", \"volume\", \"${vol}\"]}" | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
 }
 
 volume_up() {
 	vol=$(($vol + 2))
-	echo "{\"command\": [\"set_property\", \"volume\", \"${vol}\"]}" | socat - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
+	echo "{\"command\": [\"set_property\", \"volume\", \"${vol}\"]}" | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
 }
 
 change_station() {
@@ -34,7 +34,7 @@ change_station() {
 
 	# Zatrzymaj poprzednie mpv (jeśli istnieje)
 	if [ -e "${XDG_RUNTIME_DIR}/radiod/mpv-fifo" ]; then
-		echo '{"command": ["quit"]}' | socat - "${XDG_RUNTIME_DIR}/radiod/mpv-fifo"
+		echo '{"command": ["quit"]}' | %socat% - "${XDG_RUNTIME_DIR}/radiod/mpv-fifo"
 		sleep 0.2
 	fi
 
@@ -46,11 +46,11 @@ change_station() {
 	url=$(eval "${stations[$curr_station]}")
 
 	# Uruchom mpv z nowym URL
-	mpv --input-ipc-server=${XDG_RUNTIME_DIR}/radiod/mpv-fifo --no-video "$url" &>/dev/null &
+	%mpv% --input-ipc-server=${XDG_RUNTIME_DIR}/radiod/mpv-fifo --no-video "$url" &>/dev/null &
 
 	# Ustaw aktualną głośność
 	sleep 0.2
-	echo "{\"command\": [\"set_property\", \"volume\", \"${vol}\"]}" | socat - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
+	echo "{\"command\": [\"set_property\", \"volume\", \"${vol}\"]}" | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
 }
 
 init() {
