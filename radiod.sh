@@ -20,7 +20,7 @@ volume_up() {
 init() {
 	mkdir -p ${XDG_RUNTIME_DIR}/radiod
 	create_mpv
-	echo $$ >${XDG_RUNTIME_DIR}/radiod/radiod.pid
+	mkfifo ${XDG_RUNTIME_DIR}/radiod/cmd
 }
 
 h_int() {
@@ -32,18 +32,23 @@ daemon() {
 	init
 
 	trap h_int SIGINT
-	trap volume_down SIGUSR1
-	trap volume_up SIGUSR2
 
-	while true; do sleep 0.1; done
+	while read -r line <"${XDG_RUNTIME_DIR}/radiod/cmd"; do
+		case "$line" in
+		next) change_station ;;
+		volup) volume_up ;;
+		voldown) volume_down ;;
+		*) echo "Unknown command: $line" ;;
+		esac
+	done
 }
 
 if [ "$1" == "daemon" ]; then daemon; fi
 
 if [ "$1" == "down" ]; then
-	kill -SIGUSR1 $(cat /run/user/1000/radiod/radiod.pid)
+	echo "voldown" >${XDG_RUNTIME_DIR}/radiod/cmd
 fi
 
 if [ "$1" == "up" ]; then
-	kill -SIGUSR2 $(cat /run/user/1000/radiod/radiod.pid)
+	echo "volup" >${XDG_RUNTIME_DIR}/radiod/cmd
 fi
