@@ -15,7 +15,7 @@ curr_station=0
 
 create_mpv() {
 	mkfifo ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
-	%mpv% --volume=${vol} --cache-secs=60 --input-ipc-server=${XDG_RUNTIME_DIR}/radiod/mpv-fifo --no-video $(eval "${stations[0]}") &>/dev/null &
+	%mpv% --pause=yes --volume=${vol} --cache-secs=60 --input-ipc-server=${XDG_RUNTIME_DIR}/radiod/mpv-fifo --no-video $(eval "${stations[0]}") &>/dev/null &
 }
 
 volume_down() {
