@@ -32,9 +32,13 @@ pause_radio() {
 	echo '{"command": ["set_property", "pause", true]}' | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
 }
 
-toggle_pause() {
+get_paused() {
 	echo '{"command": ["get_property", "pause"]}' | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo |
-		grep -q '"data":true' &&
+		grep -q '"data":true'
+}
+
+toggle_pause() {
+	get_paused &&
 		echo '{"command": ["set_property", "pause", false]}' | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo ||
 		echo '{"command": ["set_property", "pause", true]}' | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
 }
@@ -45,6 +49,8 @@ resume_radio() {
 
 change_station() {
 	curr_station=$(((curr_station + 1) % ${#stations[@]}))
+
+	paused=$(get_paused && echo yes || echo no)
 
 	# Stop previous mpv instance
 	if [ -e "${XDG_RUNTIME_DIR}/radiod/mpv-fifo" ]; then
@@ -59,10 +65,7 @@ change_station() {
 	url=$(eval "${stations[$curr_station]}")
 
 	# Run new mpv instance with a new url
-	%mpv% --cache-secs=60 --input-ipc-server=${XDG_RUNTIME_DIR}/radiod/mpv-fifo --no-video "$url" &>/dev/null &
-
-	sleep 0.2
-	echo "{\"command\": [\"set_property\", \"volume\", \"${vol}\"]}" | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
+	%mpv% --cache-secs=60 --volume=${vol} --pause=${paused} --input-ipc-server=${XDG_RUNTIME_DIR}/radiod/mpv-fifo --no-video "$url" &>/dev/null &
 }
 
 init() {
