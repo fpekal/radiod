@@ -44,26 +44,23 @@ resume_radio() {
 }
 
 change_station() {
-	# Zwiększ indeks stacji i zawróć do początku, jeśli przekroczony
 	curr_station=$(((curr_station + 1) % ${#stations[@]}))
 
-	# Zatrzymaj poprzednie mpv (jeśli istnieje)
+	# Stop previous mpv instance
 	if [ -e "${XDG_RUNTIME_DIR}/radiod/mpv-fifo" ]; then
 		echo '{"command": ["quit"]}' | %socat% - "${XDG_RUNTIME_DIR}/radiod/mpv-fifo"
 		sleep 0.2
 	fi
 
-	# Usuń starą kolejkę FIFO i utwórz nową
+	# Reset command queue
 	rm -f ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
 	mkfifo ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
 
-	# Pobierz URL stacji
 	url=$(eval "${stations[$curr_station]}")
 
-	# Uruchom mpv z nowym URL
+	# Run new mpv instance with a new url
 	%mpv% --cache-secs=60 --input-ipc-server=${XDG_RUNTIME_DIR}/radiod/mpv-fifo --no-video "$url" &>/dev/null &
 
-	# Ustaw aktualną głośność
 	sleep 0.2
 	echo "{\"command\": [\"set_property\", \"volume\", \"${vol}\"]}" | %socat% - ${XDG_RUNTIME_DIR}/radiod/mpv-fifo
 }
